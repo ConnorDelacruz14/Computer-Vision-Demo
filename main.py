@@ -1,5 +1,6 @@
 import cv2 as cv
 import sys
+import numpy as np
 
 # Look for camera
 s = 0
@@ -8,6 +9,7 @@ if len(sys.argv) > 1:
 
 capture = cv.VideoCapture(s)
 threshold = 0.5 # 50% threshhold to detect object
+nms_threshold = 0.2 #  Used for deciding between objects
 
 
 classNames = []
@@ -31,18 +33,20 @@ while True:
     success, img = capture.read()
     #If 50% sure the detected object is an instance of an
     # object then show detection
-    classIDs, confs, bbox = net.detect(img, confThreshold=threshold)
+    classIDs, confs, bbox = net.detect(img,confThreshold=threshold)
     # print object, bounding box, and confidence level
-    print(classIDs, bbox)
+    bbox = list(bbox)
+    confs = list(np.array(confs).reshape(1,-1)[0])
+    confs = list(map(float,confs))
 
-    # For each object detected, draw a box
-    if len(classIDs) != 0:
-        for classId, confidence, box in zip(classIDs.flatten(), confs.flatten(), bbox):
-            # Draw box around object and label it
-            cv.rectangle(img, box, color=(0,255,0), thickness=2)
-            # Use box position to label
-            cv.putText(img, classNames[classId-1].upper(), (box[0]+10, box[1]+30), cv.FONT_HERSHEY_COMPLEX, 0.5, (0,255,0), 2)
-            cv.putText(img, str(confidence * 100)[:4] + "%", (box[0]+150, box[1]+30), cv.FONT_HERSHEY_COMPLEX, 0.5, (0,255,0), 2)
+    indices = cv.dnn.NMSBoxes(bbox, confs, threshold, nms_threshold)
+
+    for i, confidence in zip(indices, confs):
+        box = bbox[i]
+        x, y, w, h = box[0], box[1], box[2], box[3]
+        cv.rectangle(img, (x, y), (x+w, h+y), color=(0, 255,0), thickness=2)
+        cv.putText(img, classNames[classIDs[i]-1].upper(), (box[0]+10, box[1]+30), cv.FONT_HERSHEY_COMPLEX, 0.5, (0,255,0), 2)
+        cv.putText(img, str(confidence * 100)[:4] + "%", (box[0]+150, box[1]+30), cv.FONT_HERSHEY_COMPLEX, 0.5, (0,255,0), 2)
 
     cv.imshow("Output", img)
     cv.waitKey(1)
