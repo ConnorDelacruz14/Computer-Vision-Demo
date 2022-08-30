@@ -12,9 +12,9 @@ threshold = 0.5 # 50% threshhold to detect object
 
 classNames = []
 # Relative Paths for now
-classFile = 'Object Detection\\coco.names' 
-config = 'Object Detection\\ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt'
-weights = 'Object Detection\\frozen_inference_graph.pb'
+classFile = 'coco.names' 
+config = 'ssd_mobilenet_v3_large_coco_2020_01_14.pbtxt'
+weights = 'frozen_inference_graph.pb'
 
 with open(classFile, 'rt') as f:
     # put all the classes into a list (objects)
